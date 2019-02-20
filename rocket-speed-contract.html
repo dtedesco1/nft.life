@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en" class="h-100">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>NFT Life</title>  
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <style>
+    #flash {
+      background: linear-gradient(222deg, #36cda6, #8d36cd);
+      background-size: 400% 400%;      
+      -webkit-animation: AnimationName 7s ease infinite;
+      -moz-animation: AnimationName 7s ease infinite;
+      animation: AnimationName 7s ease infinite;
+    }
+    #logo {
+      font-family: 'Monofett', cursive;
+      font-size: 3rem;
+    }
+    body {
+    }
+    @-webkit-keyframes AnimationName {
+      0%{background-position:0% 50%}
+      50%{background-position:100% 50%}
+      100%{background-position:0% 50%}
+    }
+    @-moz-keyframes AnimationName {
+      0%{background-position:0% 50%}
+      50%{background-position:100% 50%}
+      100%{background-position:0% 50%}
+    }
+    @keyframes AnimationName { 
+      0%{background-position:0% 50%}
+      50%{background-position:100% 50%}
+      100%{background-position:0% 50%}
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css?family=Monofett" rel="stylesheet">
+</head>
+<body class="d-flex flex-column h-100 bg-light">
+    <header role="main" class="flex-shrink-0">
+        <div id="flash" class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 border-bottom border-black shadow-sm">
+          <h5 id="logo" class="my-0 mr-3 font-weight-normal"><a class="text-body" href="index.html">NFT LIFE</a></h5>
+        </div>
+    </header>
+    <main class="mt-5 container">
+      <h1 class="display-3">Rocket Speed Contract</h1>
+      <h2 class="disploy-4">Deploy a non-fungible contract right meow.</h2>
+      <hr>
+      <h3>STEP 1: Open <a target="remix" href="https://remix.ethereum.org/">Remix IDE</a></h3>
+      <h3>STEP 2: Paste in these two lines</h3>
+      <code class="lead">pragma solidity 0.5.2;<br>
+import "https://github.com/0xcert/ethereum-erc721/src/contracts/mocks/nf-token-mock.sol";</code>
+      <h3>STEP 3: Compile</h3>
+      <h3>STEP 4: Select <code>NFTokenMock</code> on the drop down</h3>
+      <h3>STEP 5: DEPLOY</h3>
+      <h3>STEP 6: Go Tweet about it</h3>
+    </main>
+
+  
+  <footer class="mt-auto border-top border-dark flex-column flex-md-row align-items-center p-3 px-md-4 mb-3">
+    <span class="text-dark">Please send comments to hello@chain76.org.</span>
+  </footer>
+</body>
+</html>
+
