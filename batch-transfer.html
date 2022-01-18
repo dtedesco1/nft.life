@@ -134,6 +134,9 @@
         if (recipientAddress.length !== 42) {
           return alert("Please fill in token recipient address.")
         }
+        if (erc721ContractAddress === recipientAddress) {
+          alert("You are about to send tokens to the contract address. If this extra warning saved you, please make a tweet mentioning @fulldecent and kwyjibo.")
+        }
         const erc721Contract = new ethers.Contract(erc721ContractAddress, erc721abi, provider);
         const isAlreadyApproved = await erc721Contract.isApprovedForAll(await signer.getAddress(), transferContractAddress);
         if (!isAlreadyApproved) {
