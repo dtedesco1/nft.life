@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.3/font/bootstrap-icons.css">
+    <title>NFT Simple Physical Fulfillment</title>
+    <style>
+      body {
+        background: linear-gradient(222deg, #065541, #5b148d);
+        background-size: 400% 400%;
+        animation: AnimationName 7s ease infinite;
+      }
+      @keyframes AnimationName { 
+        0%{background-position:0% 50%}
+        50%{background-position:100% 50%}
+        100%{background-position:0% 50%}
+      }
+      .blink {
+        animation: blinker 2s linear infinite;
+      }
+      @keyframes blinker {
+        50% { opacity: 0; }
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.6.9/dist/ethers.umd.min.js" integrity="sha256-lcZmJe4g9T1ULiPd7QArAhsk6dKMPRk6B21Fy6Tchhg=" crossorigin="anonymous"></script>
+  </head>
+  <body class="text-light vstack h-100 lead">
+<!-- As a heading -->
+    <nav class="navbar">
+      <div class="container py-1">
+        <span class="navbar-brand mb-0 h1 d-flex align-items-center">NFT Simple Physical Fulfillment <span class="badge bg-danger mx-3">Technology Demonstration</span></span>
+      </div>
+    </nav>
+
+    <section class="py-5" style="background: rgba(255,255,255,0.2)">
+      <div class="container text-center">
+        <h1>Technology demonstration</h1>
+        <p class="lead">This demo shows you the perspective of a customer and a vendor using NFT-to-physical fulfillment.</p>
+        <p class="display-4">
+          <i class="bi bi-coin" style="color: yellow"></i>
+          <i class="mx-2 bi bi-arrow-right"></i>
+          <i class="bi bi-box-seam" style="color: brown"></i>
+        </p>
+        <p id="need-metamask" class="blink">Install MetaMask on Edge/Chrome/Brave to use this demo.</p>
+        <p id="need-goerli" class="blink">Select Görli ("Goerli") network to use this demo.</p>
+        <p id="need-enable" class="blink">Enable your account in MetaMask to use this demo.</p>
+        <p id="setup-status"></p>
+      </div>
+    </section>
+
+    <main class="py-5">
+      <div class="container">
+        <div class="row">
+          <div class="col">
+            <h2 style="background: rgba(255,255,255,0.2)">Customer perspective</h2>
+            <hr>
+
+            <div>
+              <h3>Mint an NFT for free</h3>
+              <p>In your production application, you will probably charge money for these!</p>
+              <button class="btn btn-primary" id="mint-nft">Mint NFT</button>
+              <p id="mint-nft-status"></p>
+            </div>
+            <hr>
+
+            <div>
+              <h3>Sign fulfillment instructions</h3>
+              <p>In your production application, use separate fields with address validation rather than this huge box.</p>
+              <textarea id="sign-message" class="form-control" rows="3" placeholder="Enter here your token ID and all details needed to fulfill."></textarea>
+              <button class="btn btn-primary mt-3" id="sign">Sign</button>
+              <p id="sign-status"></p>
+              <p><code style="word-break: break-all" id="sign-signature"></code></p>
+            </div>
+            <hr>
+
+            <div>
+              <h3>Transfer an NFT to fulfillment wallet (no enumeration)</h3>
+              <p>If your NFT does NOT support enumeration then your customer must type which token they want to transfer.</p>
+              <div class="row g-3 align-items-center">
+                <div class="col-auto">
+                  <input type="number" id="transfer-token-id" class="form-control" aria-describedby="Token ID" placeholder="Token ID">
+                </div>
+                <div class="col-auto">
+                  <button class="btn btn-primary" id="transfer">Transfer to Fulfillment Wallet</button>
+                </div>
+              </div>
+              <p id="transfer-status"></p>
+            </div>
+
+          </div>
+          <div class="col-auto">
+            <div class="vr h-100"></div>
+          </div>
+          <div class="col">
+            <h2 style="background: rgba(255,255,255,0.2);">Vendor perspective</h2>
+            <hr>
+
+            <div>
+              <h3>Check an NFT status</h3>
+              <p></p>
+              <div class="row g-3 align-items-center">
+                <div class="col-auto">
+                  <input type="number" id="check-token-id" class="form-control" aria-describedby="Token ID" placeholder="Token ID">
+                </div>
+                <div class="col-auto">
+                  <button class="btn btn-primary" id="check">Check</button>
+                </div>
+              </div>
+              <p id="check-status"></p>
+              <p id="check-result"></p>
+            </div>
+            <hr>
+
+            <div>
+              <h3>Validate fulfillment instructions</h3>
+              <textarea id="validate-message" class="form-control" rows="3" placeholder="Enter the encoded message here"></textarea>
+              <button class="btn btn-primary mt-3" id="validate">Validate</button>
+              <p id="validate-status"></p>
+              <p id="validate-result"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    
+    <footer class="text-center my-5">
+      <span>These tools brought to you by <a class="link-light" href="https://tenthousandsu.com">Su Squares</a> and <a class="link-light" href="https://phor.net">William Entriken</a>. <a class="link-light" href="https://github.com/su-squares/nft.life">Edit</a> this page.</span>
+    </footer>
+
+    <script>
+$(async function(){
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Web3 setup ////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Require MetaMask to be running
+  if (typeof window.ethereum !== "undefined") {
+    $("#need-metamask").hide();
+  } else {
+    return;
+  }
+
+  // Require Görli network to be selected
+  const chainId = await ethereum.request({ method: 'eth_chainId' });
+  if (chainId === "0x5") {
+    $("#need-goerli").hide();
+  } else {
+    return;
+  }
+
+  // Require account to be enabled
+  ethereum.on('accountsChanged', function(){location.reload();});
+  var provider;
+  var accounts;
+  var signer;
+  try {
+    provider = new ethers.providers.Web3Provider(window.ethereum)
+    accounts = await provider.send("eth_requestAccounts", []);
+    signer = provider.getSigner()
+    $("#need-enable").hide();
+  } catch (e) {
+    return;
+  }
+
+  // Show setup status
+  $("#setup-status").html("<span class='text'><i class='text-success bi bi-check-circle-fill'></i> You are connected using <strong>MetaMask</strong> to <strong>Görli network</strong> with account <strong>"+accounts[0]+"</strong>.</span>");
+
+  // Setup contract ////////////////////////////////////////////////////////////
+  const fulfillAddress = "0x00000000000000000000000000000000ffaaDDEE"; // TODO: Replace with your own address
+  const contractAddress = "0xd6b74813800a6d53F60A936e0f063d727d4D8627"; // TODO: Replace with your own address
+  const contractABI = [
+    "function mint()",
+    "function ownerOf(uint256 tokenId) external view returns (address)",
+    "function transferFrom(address from, address to, uint256 tokenId) external",
+    "event Transfer(address indexed from, address indexed to, uint256 indexed toketId)",
+  ];
+  const contract = new ethers.Contract(contractAddress, contractABI, provider);
+  const contractWithSigner = contract.connect(signer);
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Customer perspective actions //////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  $("#mint-nft").click(async function(){
+    var tx;
+    try {
+      tx = await contractWithSigner.mint(); 
+      $("#mint-nft-status").html("<span class='text'>Minting&hellip; (see pending status in MetaMask)</span>");
+      const receipt = await tx.wait();
+      const nftId = ethers.BigNumber.from(receipt.logs[0].topics[3]).toNumber();
+      $("#mint-nft-status").html("<span class='text'><i class='text-success bi bi-check-circle-fill'></i> Minted NFT #"+nftId+"</span>");
+    } catch (e) {
+      $("#mint-nft-status").html("<span class='text'><i class='text-danger bi bi-exclamation-triangle'></i> "+e.message+"</span>");
+    }
+  });
+
+  $("#transfer").click(async function(){
+    // Check token ownership
+    var nftId;
+    try {
+      nftId = ethers.BigNumber.from($("#transfer-token-id").val());
+    } catch (e) {
+      $("#transfer-status").html("<span class='text'><i class='text-danger bi bi-exclamation-triangle'></i> Invalid number</span>");
+      return;
+    }
+    var nftOwner;
+    try {
+      nftOwner = await contract.ownerOf(nftId);
+    } catch (e) {
+      $("#transfer-status").html("<span class='text'><i class='text-danger bi bi-exclamation-triangle'></i> Invalid token ID</span>");
+      return;
+    }
+    if (nftOwner.toLowerCase() !== accounts[0].toLowerCase()) {
+      $("#transfer-status").html("<span class='text'><i class='text-danger bi bi-exclamation-triangle'></i> You do not own NFT #"+nftId+"</span>");
+      return;
+    }
+
+    // Transfer NFT
+    var tx;
+    try {
+      tx = await contractWithSigner.transferFrom(await signer.getAddress(), fulfillAddress, nftId); 
+      $("#transfer-status").html("<span class='text'>Transferring&hellip; (see pending status in MetaMask)</span>");
+      const receipt = await tx.wait();
+      $("#transfer-status").html("<span class='text'><i class='text-success bi bi-check-circle-fill'></i> Transferred NFT #"+nftId+"</span>");
+    } catch (e) {
+      $("#transfer-status").html("<span class='text'><i class='text-danger bi bi-exclamation-triangle'></i> "+e.message+"</span>");
+    }
+  });
+
+  $("#sign").click(async function(){
+    const message = $("#sign-message").val();
+    if (message.length === 0) {
+      $("#sign-status").html("<span class='text'><i class='text-danger bi bi-exclamation-triangle'></i> Please enter a message</span>");
+      return;
+    }
+    try {
+      const signature = await signer.signMessage(message);
+      $("#sign-status").html("<span class='text'><i class='text-success bi bi-check-circle-fill'></i> Signed message</span>");
+      $("#sign-signature").text(JSON.stringify({"message": message, "signature": signature}));
+    } catch (e) {
+      $("#sign-status").html("<span class='text'><i class='text-danger bi bi-exclamation-triangle'></i> "+e.message+"</span>");
+    }
+  });
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Vendor perspective actions ////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  $("#check").click(async function(){
+    // Check token ownership
+    var nftId;
+    $("#check-result").html("");
+    try {
+      nftId = ethers.BigNumber.from($("#check-token-id").val());
+    } catch (e) {
+      $("#check-status").html("<span class='text'><i class='text-danger bi bi-exclamation-triangle'></i> Invalid number</span>");
+      return;
+    }
+    var nftOwner;
+    try {
+      nftOwner = await contract.ownerOf(nftId);
+    } catch (e) {
+      $("#check-status").html("<span class='text'><i class='text-danger bi bi-exclamation-triangle'></i> Invalid token ID</span>");
+      return;
+    }
+    if (nftOwner.toLowerCase() === fulfillAddress.toLowerCase()) {
+      $("#check-status").html("<span class='text'><i class='text-success bi bi-check-circle-fill'></i> Fulfillment wallet owns NFT #"+nftId+"</span>");
+    } else {
+      $("#check-status").html("<span class='text'><i class='text-danger bi bi-exclamation-triangle'></i> Fulfillment wallet does not own NFT #"+nftId+"</span>");
+      return;
+    }
+
+    // Check who sent it
+    var nftSender;
+    var logs;
+    try {
+      const filter = contract.filters.Transfer(null, fulfillAddress, nftId);
+      logs = await contract.queryFilter(filter);
+      //WARNING: this code does not handle if the fulfill address transfers the NFT and then a second person sends to the fulfill wallet, if you need that call Will
+      logs.sort((a, b) => (a.blockNumber, a.logIndex) < (b.blockNumber, b.logIndex) ? 1 : -1);
+      const interface = new ethers.utils.Interface(contractABI);
+      const decodedLog = interface.decodeEventLog("Transfer", logs[0].data, logs[0].topics);
+      $("#check-result").html("<span class='text'><i class='text-success bi bi-check-circle-fill'></i> NFT #"+nftId+" sent from "+decodedLog.from+"</span>");
+    } catch (e) {
+      console.log(logs)
+      $("#check-result").html("<span class='text'><i class='text-danger bi bi-exclamation-triangle'></i> "+e.message+"</span>");
+    }
+  });
+
+  $("#validate").click(async function(){
+    // Parse message
+    var message;
+    var signature;
+    try {
+      messageAndSignature = JSON.parse($("#validate-message").val());
+      message = messageAndSignature.message;
+      signature = messageAndSignature.signature;
+    } catch (e) {
+      $("#validate-status").html("<span class='text'><i class='text-danger bi bi-exclamation-triangle'></i> Invalid JSON</span>");
+      return;
+    }
+
+    // Validate signature
+    try {
+      const signer = ethers.utils.verifyMessage(message, signature);
+      $("#validate-status").html("<span class='text'><i class='bi bi-check-circle-fill'></i> The message format is correct</span>");
+      $("#validate-result").html("This message was signed by <strong>"+signer+"</strong>, if that is the account you were expecting, you are good to proceed");
+    } catch (e) {
+      $("#sign-status").html("<span class='text'><i class='text-danger bi bi-exclamation-triangle'></i> "+e.message+"</span>");
+    }
+  });
+});
+    </script>
+  </body>
+</html>
