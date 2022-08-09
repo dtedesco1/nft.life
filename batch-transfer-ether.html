@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
+    <title>NFT Life</title>
+    <style>
+      #flash {
+        transform: rotate(-10deg);
+      }
+      #flash h1 {
+        font-family: 'Courier New';
+      }
+      body {
+        background: linear-gradient(222deg, #065541, #5b148d);
+        background-size: 400% 400%;
+        animation: AnimationName 7s ease infinite;
+      }
+      @keyframes AnimationName { 
+        0%{background-position:0% 50%}
+        50%{background-position:100% 50%}
+        100%{background-position:0% 50%}
+      }
+    </style>
+    </head>
+  <body class="text-light vstack h-100 lead">
+    <header id="flash" class="pricing-header my-5 py-lg-5 mx-auto">
+      <h1 class="display-1">NFT LIFE</h1>
+    </header>
+
+    <main role="main" class="row w-75 mx-auto">
+      <h1>Batch transfer NFTs</h1>
+      <p class="mb-5">This tool allows you send multiple tokens you own to another address in one transaction. This can be significantly cheaper than sending tokens one-at-a-time.</p>
+      <ul>
+        <li><strong>WARNING</strong> If you send more Ether into this contract than the sum of amounts, somebody WILL snipe the remainder.</li>
+        <li><strong>WARNING</strong> If any transfer reverts the whole batch reverts, try again and exclude that recipient.</li>
+        <li><strong>WARNING</strong> If any recipient is (or becomes!) a smart contract it can cause its transfer to fail.</li>
+        <li><strong>WARNING</strong> If any recipient is (or becomes!) a smart contract it can spend your gas, use limits.</li>
+      </ul>
+
+        <div class="mb-3">
+            <label for="network" class="form-label">Network</label>
+            <select class="form-select" id="network">
+              <option selected>PICK A NETWORK</option>
+              <option value="ethereumgoerli">Ethereum Görli test network</option>
+            </select>
+        </div>
+        <div class="row row-cols-lg-2 mb-3">
+          <div class="col">
+            <label for="recipients" class="form-label">Recipient addresses (one per line)</label>
+            <textarea class="form-control" id="recipients" rows="3"></textarea>
+          </div>
+          <div class="col">
+            <label for="amounts" class="form-label">Amounts (one per line, in Wei)</label>
+            <textarea class="form-control" id="amounts" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="hstack gap-3 mb-3">
+          <button id="btntransfer" class="btn btn-lg btn-primary">Transfer</button>
+          No platform fee, cost is total of amounts
+        </div>
+
+        <hr class="my-5">
+        <p>The batch transfer contracts are:</p>
+        <ul>
+          <li>Ethereum Görli: <a target="_blank" href="https://goerli.etherscan.io/address/0x0dFCB9937B446E217d6d07acca9cd5d9B421e28B#code">0x0dFCB9937B446E217d6d07acca9cd5d9B421e28B</a></li>
+        </ul>
+    </main>
+    
+    <footer class="text-center my-5">
+      <span>These tools brought to you by <a class="link-light" href="https://tenthousandsu.com">Su Squares</a> and <a class="link-light" href="https://phor.net">William Entriken</a>.</span>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.4.6/dist/ethers.umd.min.js" integrity="sha256-hhyZwmdi3z8gOlk+hH86uTyHPFbQQ4j9JGWW/pE+kks=" crossorigin="anonymous"></script>
+    <script>
+      const transferContractAddressPerNetwork = {
+        ethereumgoerli: "0xF55e866BA4c591f8869b51aCF623Dc43d5500e72" // https://goerli.etherscan.io/address/0xF55e866BA4c591f8869b51aCF623Dc43d5500e72#code
+      }
+      const transferContractAbi = [
+        "function batchEth(tuple(address recipient, uint256 amount)[] instructions) payable",
+      ];
+
+      document.getElementById("btntransfer").addEventListener("click", async function() {
+        await ethereum.request({ method: "eth_requestAccounts" });
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+
+        const network = document.getElementById("network").value;
+        if (typeof transferContractAddressPerNetwork[network] === "undefined") {
+          return alert("Please pick a network.");
+        }
+        const transferContractAddress = transferContractAddressPerNetwork[network];
+        const recipients = document.getElementById("recipients").value
+          .split("\n")
+          .map(x => x.trim())
+          .filter(x => x.length > 0);
+        const amounts = document.getElementById("amounts").value
+          .split("\n")
+          .map(x => x.trim())
+          .filter(x => x.length > 0);
+        if (recipients.length !== amounts.length) {
+          return alert("Please enter the same number of recipients and amounts.");
+        }
+
+        const recipientsAndAmounts = [];
+        let totalValue = ethers.BigNumber.from(0);
+        for (let i = 0; i < recipients.length; i++) {
+          const recipient = ethers.utils.getAddress(recipients[i]);
+          const amount = ethers.BigNumber.from(amounts[i]);
+          recipientsAndAmounts.push([ recipient, amount ]);
+          totalValue = totalValue.add(amount);
+        }
+
+        const contract = new ethers.Contract(transferContractAddress, transferContractAbi, provider);
+        const contractWithSigner = contract.connect(signer);
+        const tx = await contractWithSigner.batchEth(recipientsAndAmounts, { value: totalValue });
+      });
+    </script>
+    
+  
+  </body>
+</html>
+
+
+
