@@ -3,3 +3,14 @@
 
 # Becuase GitHub Pages uses its own version and not the one in your lock file
 Gemfile.lock
+
+# Because users will have different development environments
+package.json
+truffle-config.js
+node_modules
+package-lock.json
+yarn.lock
+
+# Because users won't be deploying from this repo
+/build
+/migrations

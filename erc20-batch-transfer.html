@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <title>NFT Life</title>
+    <style>
+      #flash {
+        transform: rotate(-10deg);
+      }
+      #flash h1 {
+        font-family: 'Monofett', cursive;
+      }
+      body {
+        background: linear-gradient(222deg, #065541, #5b148d);
+        background-size: 400% 400%;
+        animation: AnimationName 7s ease infinite;
+      }
+      @keyframes AnimationName { 
+        0%{background-position:0% 50%}
+        50%{background-position:100% 50%}
+        100%{background-position:0% 50%}
+      }
+    </style>
+    <link href="https://fonts.googleapis.com/css?family=Monofett" rel="stylesheet">
+    </head>
+  <body class="text-light vstack h-100 lead">
+    <header id="flash" class="pricing-header my-5 py-lg-5 mx-auto">
+      <h1 class="display-1">NFT LIFE</h1>
+    </header>
+
+    <main role="main" class="row w-75 mx-auto">
+
+      <h1>Batch transfer ERC20 tokens</h1>
+      <p class="mb-5">This tool allows you send multiple tokens you own to another address in one transaction. This can be significantly cheaper than sending tokens one-at-a-time.</p>
+
+        <div class="mb-3">
+            <label for="network" class="form-label">Network</label>
+            <select class="form-select" id="network">
+              <option selected>PICK A NETWORK</option>
+              <!-- Add later:  <option value="ethereummainnet">Ethereum Mainnet</option> --> 
+              <option value="ethereumgoerli">Ethereum Goerli test network</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="erc20" class="form-label">Token contract address</label>
+            <input class="form-control" id="erc20" placeholder="0x...">
+        </div>
+        <div class="mb-3">
+            <label for="recipient(s)" class="form-label">Recipient address(es)</label>
+            <textarea class="form-control" id="recipients" rows="3" placeholder="0x..."></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="values" class="form-label">Corresponding transfer values (one per line, in integer numbers)</label>
+            <textarea class="form-control" id="values" rows="3" placeholder="100"></textarea>
+          </div>
+
+        <div class="hstack gap-3 mb-3">
+          <button id="btnapprove" class="btn btn-lg btn-secondary">Set Allowance</button>
+          <input class="form-control" id="erc20" placeholder="100...">
+          Total amount you approve for transfer via this site.
+        </div>
+        <div class="hstack gap-3 mb-3">
+          <button id="btntransfer" class="btn btn-lg btn-primary">Transfer</button>
+          No platform fee, gas cost is linear to number of tokens
+        </div>
+
+        <hr class="my-5">
+        <p>The batch transfer contracts are:</p>
+        <ul>
+          <!-- <li>Ethereum Mainnet: <a target="_blank" href="https://etherscan.io/address/0x2e2234b3a848f895a60b2071f90303cd02f7491d#code">0x2E2234b3A848F895a60B2071F90303CD02f7491D</a></li> -->
+          <li>Ethereum Goerli: <a target="_blank" href="https://goerli.etherscan.io/address/#########code">##########</a></li>
+        </ul>
+    </main>
+    
+    <footer class="text-center my-5">
+      <span>These tools brought to you by <a class="link-light" href="https://tenthousandsu.com">Su Squares</a> and <a class="link-light" href="https://phor.net">William Entriken</a>.</span>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.4.6/dist/ethers.umd.min.js" integrity="sha256-hhyZwmdi3z8gOlk+hH86uTyHPFbQQ4j9JGWW/pE+kks=" crossorigin="anonymous"></script>
+    <script>
+      const transferContractAddressPerNetwork = {
+        // ethereummainnet: "0x2E2234b3A848F895a60B2071F90303CD02f7491D", // https://etherscan.io/address/0x2e2234b3a848f895a60b2071f90303cd02f7491d#code
+        ethereumgoerli: "##########" // https://goerli.etherscan.io/address/#########code
+      }
+      const transferContractAbi = [
+        "function batchTransfer(address tokenContract, address recipient, uint256[] calldata tokenIds)"
+      ];
+
+      const erc20abi = [
+        "function setApprovalForAll(address operator, bool approved)",
+        "function isApprovedForAll(address owner, address operator) view returns (bool)"
+      ];
+
+      document.getElementById("btnapprove").addEventListener("click", async function() {
+        await ethereum.request({ method: "eth_requestAccounts" });
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+
+        const network = document.getElementById("network").value;
+        if (typeof transferContractAddressPerNetwork[network] === "undefined") {
+          return alert("Please pick a network.");
+        }
+        const transferContractAddress = transferContractAddressPerNetwork[network];
+        const erc20ContractAddress = document.getElementById("contract").value;
+        if (erc20ContractAddress.length !== 42) {
+          return alert("Please fill in contract address for ERC-20 token contract.")
+        }
+        const erc20Contract = new ethers.Contract(erc20ContractAddress, erc20abi, provider);
+        const isAlreadyApproved = await erc20Contract.isApprovedForAll(await signer.getAddress(), transferContractAddress);
+        if (isAlreadyApproved) {
+          return alert("Contract was already approved before you clicked that button, aborting.");
+        }
+        const erc20ContractWithSigner = erc20Contract.connect(signer);
+        await erc20ContractWithSigner.setApprovalForAll(transferContractAddress, true);
+      });
+
+      document.getElementById("btntransfer").addEventListener("click", async function() {
+        await ethereum.request({ method: "eth_requestAccounts" });
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+
+        const network = document.getElementById("network").value;
+        if (typeof transferContractAddressPerNetwork[network] === "undefined") {
+          return alert("Please pick a network.");
+        }
+        const transferContractAddress = transferContractAddressPerNetwork[network];
+        const erc20ContractAddress = document.getElementById("contract").value;
+        if (erc20ContractAddress.length !== 42) {
+          return alert("Please fill in contract address for ERC-20 token contract.")
+        }
+        const recipientAddress = document.getElementById("recipient").value;
+        if (recipientAddress.length !== 42) {
+          return alert("Please fill in token recipient address.")
+        }
+        if (erc20ContractAddress === recipientAddress) {
+          alert("You are about to send tokens to the contract address. If this extra warning saved you, please make a tweet mentioning @fulldecent and kwyjibo.")
+        }
+        const erc20Contract = new ethers.Contract(erc20ContractAddress, erc20abi, provider);
+        const isAlreadyApproved = await erc20Contract.isApprovedForAll(await signer.getAddress(), transferContractAddress);
+        if (!isAlreadyApproved) {
+          return alert("You did not approve contract for batch transfer yet. Please do that first. Aborted batch transfer.");
+        }
+        const tokenIds = document.getElementById("tokenids").value.trim().split(/\s+/);
+        if (tokenIds.length === 0 || (tokenIds.length === 1 && tokenIds[0] === '')) {
+          return alert("Please enter token IDs to transfer.");
+        }
+        for (let i = 0; i < tokenIds.length; i++) {
+          if (!tokenIds[i].match(/^\d+$/)) {
+            return alert("Token IDs must be decimal numbers. Your token in position " + i + " was " + tokenIds[i]);
+          }
+        }
+        const tokenIdsBigNumbers = tokenIds.map(x => ethers.BigNumber.from(x));
+
+        const transferContract = new ethers.Contract(transferContractAddress, transferContractAbi, provider);
+        const transferContractWithSigner = transferContract.connect(signer);
+        await transferContractWithSigner.batchTransfer(erc20ContractAddress, recipientAddress, tokenIds);
+
+      });
+    </script>
+    
+  
+  </body>
+</html>
+
+
+
