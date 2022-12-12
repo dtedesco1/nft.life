@@ -33,7 +33,7 @@
     <main role="main" class="row w-75 mx-auto">
 
       <h1>Batch transfer ERC20 tokens</h1>
-      <p class="mb-5">This tool allows you send multiple tokens you own to another address in one transaction. This can be significantly cheaper than sending tokens one-at-a-time.</p>
+      <p class="mb-5">This tool allows you send varying amounts of tokens you own to multiple addresses in one transaction. This can be significantly cheaper than sending tokens one-at-a-time.</p>
 
         <div class="mb-3">
             <label for="network" class="form-label">Network</label>
@@ -45,16 +45,16 @@
         </div>
         <div class="mb-3">
             <label for="erc20" class="form-label">Token contract address</label>
-            <input class="form-control" id="erc20" placeholder="0x...">
+            <input class="form-control" id="contract" placeholder="0x...">
         </div>
         <div class="mb-3">
-            <label for="recipient(s)" class="form-label">Recipient address(es)</label>
-            <textarea class="form-control" id="recipients" rows="3" placeholder="0x..."></textarea>
+          <label for="recipient(s)" class="form-label">Comma-separated Recipient Address(es)</label>
+          <textarea class="form-control" id="recipients" rows="3" placeholder="0x..., 0x..."></textarea>
         </div>
         <div class="mb-3">
-            <label for="values" class="form-label">Corresponding transfer values (one per line, in integer numbers)</label>
-            <textarea class="form-control" id="values" rows="3" placeholder="100"></textarea>
-          </div>
+          <label for="values" class="form-label">Comma-separated Corresponding transfer values</label>
+          <textarea class="form-control" id="values" rows="3" placeholder="100,20"></textarea>
+        </div>
 
         <div class="hstack gap-3 mb-3">
           <button id="btnapprove" class="btn btn-lg btn-secondary">Set Allowance</button>
@@ -69,28 +69,29 @@
         <hr class="my-5">
         <p>The batch transfer contracts are:</p>
         <ul>
-          <!-- <li>Ethereum Mainnet: <a target="_blank" href="https://etherscan.io/address/0x2e2234b3a848f895a60b2071f90303cd02f7491d#code">0x2E2234b3A848F895a60B2071F90303CD02f7491D</a></li> -->
-          <li>Ethereum Goerli: <a target="_blank" href="https://goerli.etherscan.io/address/#########code">##########</a></li>
+          <!-- <li>Ethereum Mainnet: <a target="_blank" href="https://etherscan.io/address/XXXXXXX">xxxxxxxxxx</a></li> -->
+          <li>Ethereum Goerli: <a target="_blank" href="https://goerli.etherscan.io/address/0xc4C93F0F54c1Ff5753812e6F1bb12cEb8137FE16#code">0xc4C93F0F54c1Ff5753812e6F1bb12cEb8137FE16</a></li>
         </ul>
     </main>
     
     <footer class="text-center my-5">
-      <span>These tools brought to you by <a class="link-light" href="https://tenthousandsu.com">Su Squares</a> and <a class="link-light" href="https://phor.net">William Entriken</a>.</span>
+      <span>These tools brought to you by <a class="link-light" href="https://tenthousandsu.com">Su Squares</a>, <a class="link-light" href="https://phor.net">William Entriken</a>, and <a class="link-light" href="https://dtedes.co">Daniel Tedesco</a>.</span>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.4.6/dist/ethers.umd.min.js" integrity="sha256-hhyZwmdi3z8gOlk+hH86uTyHPFbQQ4j9JGWW/pE+kks=" crossorigin="anonymous"></script>
     <script>
       const transferContractAddressPerNetwork = {
-        // ethereummainnet: "0x2E2234b3A848F895a60B2071F90303CD02f7491D", // https://etherscan.io/address/0x2e2234b3a848f895a60b2071f90303cd02f7491d#code
+        // ethereummainnet: "XXXX", // https://etherscan.io/address/xxxxxx
         ethereumgoerli: "0xc4C93F0F54c1Ff5753812e6F1bb12cEb8137FE16" // https://goerli.etherscan.io/address/0xc4C93F0F54c1Ff5753812e6F1bb12cEb8137FE16
       }
       const transferContractAbi = [
-        "function batchTransfer(address tokenContract, address recipient, uint256[] calldata tokenIds)"
+        "function batchTransfer(address tokenContract, address[] calldata recipients, uint256[] calldata values)"
       ];
 
       const erc20abi = [
-        "function setApprovalForAll(address operator, bool approved)",
-        "function isApprovedForAll(address owner, address operator) view returns (bool)"
+        "function allowance(address owner, address spender)",
+        "function approve(address spender, uint256 amount)",
+        "function transferFrom(address from, address to, uint256 value)"
       ];
 
       document.getElementById("btnapprove").addEventListener("click", async function() {
@@ -108,12 +109,12 @@
           return alert("Please fill in contract address for ERC-20 token contract.")
         }
         const erc20Contract = new ethers.Contract(erc20ContractAddress, erc20abi, provider);
-        const isAlreadyApproved = await erc20Contract.isApprovedForAll(await signer.getAddress(), transferContractAddress);
-        if (isAlreadyApproved) {
-          return alert("Contract was already approved before you clicked that button, aborting.");
-        }
         const erc20ContractWithSigner = erc20Contract.connect(signer);
-        await erc20ContractWithSigner.setApprovalForAll(transferContractAddress, true);
+        const allowance = await erc20ContractWithSigner.approve(await signer.getAddress(), transferContractAddress);
+        if (allowance) {
+          return alert("Contract is allowed.");
+        }
+        await erc20ContractWithSigner.approve(transferContractAddress, true);
       });
 
       document.getElementById("btntransfer").addEventListener("click", async function() {
@@ -130,32 +131,33 @@
         if (erc20ContractAddress.length !== 42) {
           return alert("Please fill in contract address for ERC-20 token contract.")
         }
-        const recipientAddress = document.getElementById("recipient").value;
-        if (recipientAddress.length !== 42) {
-          return alert("Please fill in token recipient address.")
+        const recipientAddress = document.getElementById("recipients").value;
+        if (recipientAddress.length <= 42) {
+          return alert("Please fill in at least one token recipient address.")
         }
         if (erc20ContractAddress === recipientAddress) {
-          alert("You are about to send tokens to the contract address. If this extra warning saved you, please make a tweet mentioning @fulldecent and kwyjibo.")
+          alert("You are about to send tokens to the contract address. If this extra warning saved you, please make a tweet mentioning @fulldecent and @dtedesco1.")
         }
         const erc20Contract = new ethers.Contract(erc20ContractAddress, erc20abi, provider);
-        const isAlreadyApproved = await erc20Contract.isApprovedForAll(await signer.getAddress(), transferContractAddress);
-        if (!isAlreadyApproved) {
+        const erc20ContractWithSigner = erc20Contract.connect(signer);
+        const allowance = await erc20ContractWithSigner.allowance(await signer.getAddress(), transferContractAddress);
+        if (!allowance) {
           return alert("You did not approve contract for batch transfer yet. Please do that first. Aborted batch transfer.");
         }
-        const tokenIds = document.getElementById("tokenids").value.trim().split(/\s+/);
-        if (tokenIds.length === 0 || (tokenIds.length === 1 && tokenIds[0] === '')) {
-          return alert("Please enter token IDs to transfer.");
-        }
-        for (let i = 0; i < tokenIds.length; i++) {
-          if (!tokenIds[i].match(/^\d+$/)) {
-            return alert("Token IDs must be decimal numbers. Your token in position " + i + " was " + tokenIds[i]);
-          }
-        }
-        const tokenIdsBigNumbers = tokenIds.map(x => ethers.BigNumber.from(x));
+
+        const recipients = document.getElementById('recipients').value;
+        const values = document.getElementById('values').value;
+
+        // Convert the recipients and values strings to arrays of addresses and values
+        const recipientsArray = recipients.split(',').map((address) => address.trim());
+        const valuesArray = values.split(',').map((value) => parseInt(value.trim()));
+        console.log(recipientsArray)
+        console.log(valuesArray)
 
         const transferContract = new ethers.Contract(transferContractAddress, transferContractAbi, provider);
         const transferContractWithSigner = transferContract.connect(signer);
-        await transferContractWithSigner.batchTransfer(erc20ContractAddress, recipientAddress, tokenIds);
+        const overrides = { gasLimit: 8000000 };
+        await transferContractWithSigner.batchTransfer(erc20ContractAddress, recipientsArray, valuesArray, overrides);
 
       });
     </script>
@@ -165,4 +167,36 @@
 </html>
 
 
+<!-- Goerli addresses:  0x49D8621f8862c423AbbA0dfAe4916F838Cd264F6,0x3E50931B32e49fB9C4938198FD5Ef4293E15B90F -->
+<!-- Goerli weenus token:  0xaFF4481D10270F50f203E0763e2597776068CBc5 -->
 
+<!-- ERC20BatchTransfer Contract at Goerli address 0xc4C93F0F54c1Ff5753812e6F1bb12cEb8137FE16:
+```
+/**
+ *Submitted for verification at Etherscan.io on 2022-12-12
+*/
+
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.10;
+
+interface ERC20Partial {
+    function transferFrom(address from, address to, uint256 value) external;
+}
+
+contract ERC20BatchTransfer {
+    /// @notice Tokens on the given ERC-20 contract are transferred from you to a recipient.
+    ///         Don't forget to execute `approve` first to authorize this contract and the transfer amounts.
+    ///         Make sure the addresses and values are ordered correctly.
+    /// @param  tokenContract   An ERC-20 contract
+    /// @param  recipients      A list of who gets tokens
+    /// @param  values          A list of how much each recipient receives
+    function batchTransfer(ERC20Partial tokenContract, address[] calldata recipients, uint256[] calldata values) external {
+        require(recipients.length > 0 && values.length > 0, 'Must input at least one recipient and one value.');
+        require(recipients.length == values.length, 'Length of recipients and values must be equal.');
+        for (uint256 i; i < recipients.length; i++) {
+            tokenContract.transferFrom(msg.sender, recipients[i], values[i]);
+        }
+    }
+}
+``` -->
